@@ -19,7 +19,8 @@ import java.net.URI;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-
+import java.util.UUID;
+import java.io.PrintWriter;
 public class RestfulAPI {
     private static String version = "0.01a";
     private static final String[] options = {"GET", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"};
@@ -39,6 +40,7 @@ public class RestfulAPI {
         String response;
         //printRequestInfo(exchange);
         exchange.getResponseHeaders().set("Content-Type","application/json");
+        // TODO add authentication here
         if (exchange.getRequestMethod().toLowerCase().equals("get")) {
             response = GETRequest(exchange);
             exchange.sendResponseHeaders(200, response.getBytes().length);
@@ -77,7 +79,10 @@ public class RestfulAPI {
         try {
             // TODO
             URI requestURI = exchange.getRequestURI();
-            json.addRule("Path Requested", requestURI.toString());
+            json.addRule("path", requestURI.toString());
+            //json.addRule("keys", requestURI.getQuery());
+            json.addRule("method", exchange.getRequestMethod());
+            //json.addRule("IP", exchange.getRemoteAddress().toString());
             String response = json.toString();
             return response;
         } catch (Exception e) {
@@ -102,9 +107,100 @@ public class RestfulAPI {
         // Create document
         JSONObject json = new JSONObject();
         json.addRule("version", version);
-        String response = json.toString();
         try {
+            try {
             // TODO
+            if (exchange.getRequestURI().getQuery() != null) {
+               String filename = null;
+               String URL = null;
+               String opFirstName = null;
+               String opLastName = null;
+               String picName = null;
+               String serviceName = null;
+               String query = exchange.getRequestURI().getQuery();
+               // TODO buggy as heck
+               if (query.contains("filename=")) {
+                   if (query.contains("&")) {
+                       filename = query.substring(query.indexOf("filename="), query.indexOf("&"));
+                   } else {
+                       filename = query.substring(query.indexOf("filename="), query.length());
+                   }
+                   query = query.substring(query.indexOf("filename="), query.length());
+               }
+               if (query.contains("URL=")) {
+                   if (query.contains("&")) {
+                       URL = query.substring(query.indexOf("URL="), query.indexOf("&"));
+                   } else {
+                       URL = query.substring(query.indexOf("URL="), query.length());
+                   }
+                   query = query.substring(query.indexOf("URL="), query.length());
+               }
+               if (query.contains("opFirstName=")) {
+                   if (query.contains("&")) {
+                       opFirstName = query.substring(query.indexOf("opFirstName="), query.indexOf("&"));
+                   } else {
+                       opFirstName = query.substring(query.indexOf("opFirstName="), query.length());
+                   }
+                   query = query.substring(query.indexOf("opFirstName="), query.length());
+               }
+               if (query.contains("opLastName=")) {
+                   if (query.contains("&")) {
+                       opLastName = query.substring(query.indexOf("opLastName="), query.indexOf("&"));
+                   } else {
+                       opLastName = query.substring(query.indexOf("opLastName="), query.length());
+                   }
+                   query = query.substring(query.indexOf("opLastName="), query.length());
+               }
+               if (query.contains("picName=")) {
+                   if (query.contains("&")) {
+                       picName = query.substring(query.indexOf("picName="), query.indexOf("&"));
+                   } else {
+                       picName = query.substring(query.indexOf("picName="), query.length());
+                   }
+                   query = query.substring(query.indexOf("picName="), query.length());
+               }
+               if (query.contains("serviceName=")) {
+                   if (query.contains("&")) {
+                       serviceName = query.substring(query.indexOf("serviceName="), query.indexOf("&"));
+                   } else {
+                       serviceName = query.substring(query.indexOf("serviceName="), query.length());
+                   }
+                   query = query.substring(query.indexOf("serviceName="), query.length());
+               }
+               JSONObject newFile = new JSONObject();
+               if (filename != null) {
+                   newFile.addRule("filename", filename.substring(9));
+               } else {
+                   filename = UUID.randomUUID().toString();
+               }
+               if (URL != null) {
+                   newFile.addRule("URL", URL.substring(4));
+               }
+               if (opFirstName != null) {
+                   newFile.addRule("opFirstName", opFirstName.substring(12));
+               }
+               if (opLastName != null) {
+                   newFile.addRule("opLastName", opLastName.substring(11));
+               }
+               if (picName != null) {
+                   newFile.addRule("picName", picName.substring(8));
+               }
+               if (serviceName != null) {
+                   newFile.addRule("serviceName", serviceName.substring(12));
+               }
+               PrintWriter file = new PrintWriter(filename+".json");
+               file.println(newFile.toString());
+               file.close();
+               json.addRule("status", "200");
+            } else {
+                json.addRule("status", "400");
+                json.addRule("reason", "No arguments given");
+            } 
+        } catch (Exception e) {
+            json.addRule("status", "500");
+            json.addRule("reason", e.toString());
+        }   
+            String response = json.toString();
             return response;
         } catch (Exception e) {
             return handle404(exchange);
