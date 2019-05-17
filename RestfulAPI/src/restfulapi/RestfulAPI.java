@@ -22,7 +22,7 @@ import java.net.InetSocketAddress;
 
 public class RestfulAPI {
     private static String version = "0.01a";
-
+    private static final String[] options = {"GET", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"};
     /**
      * @param args the command line arguments
      */
@@ -54,8 +54,12 @@ public class RestfulAPI {
         } else if (exchange.getRequestMethod().toLowerCase().equals("delete")) {
             response = DELETERequest(exchange);
             exchange.sendResponseHeaders(200, response.getBytes().length);
+        } else if (exchange.getRequestMethod().toLowerCase().equals("options")) {
+            response = OPTIONSRequest(exchange);
+            exchange.sendResponseHeaders(200, response.getBytes().length);
         } else {
             JSONObject json = new JSONObject();
+            json.addRule("version", version);
             json.addRule("Error", "Request not understood");
             response = json.toString();
             exchange.sendResponseHeaders(400, response.getBytes().length);
@@ -70,9 +74,11 @@ public class RestfulAPI {
         // Return info
         JSONObject json = new JSONObject();
         json.addRule("version", version);
-        String response = json.toString();
         try {
             // TODO
+            URI requestURI = exchange.getRequestURI();
+            json.addRule("Path Requested", requestURI.toString());
+            String response = json.toString();
             return response;
         } catch (Exception e) {
             return handle404(exchange);
@@ -129,6 +135,13 @@ public class RestfulAPI {
         } catch (Exception e) {
             return handle404(exchange);
         }
+    }
+    
+    private static String OPTIONSRequest(HttpExchange exchange) throws IOException {
+        JSONObject json = new JSONObject();
+        json.addRule("version", version);
+        json.addRule("methods", options);
+        return json.toString();
     }
     
     private static String handle404 (HttpExchange exchange) throws IOException {

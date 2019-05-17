@@ -17,6 +17,10 @@ public class JSONObject {
         rules.add(new JSONRule(f, v));
     }
     
+    public void addRule(String f, String[] v) {
+        rules.add(new JSONRule(f, v));
+    }
+    
     @Override 
     public String toString() {
         String out = "{";
